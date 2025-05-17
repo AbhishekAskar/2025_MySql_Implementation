@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./utils/db-connnection');
 const studentRoutes = require('./routes/studentsRoutes');
+const studentModels = require('./models/students');
 const app = express();
 let port = 3000;
 
@@ -12,6 +13,11 @@ app.get('/', (req, res) => {
 
 app.use('/students', studentRoutes);
 
-app.listen(port, (req, res) => {
-    console.log("The is listening on Port: " + port);
+db.sync({forced: true}).then(()=>{
+    app.listen(port, (req, res) => {
+        console.log("The is listening on Port: " + port);
+    })
+}).catch((error)=>{
+    console.log(error);
 })
+
