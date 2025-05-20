@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./utils/db-connnection');
 const studentRoutes = require('./routes/studentsRoutes');
+const courseRoutes = require('./routes/courseRoutes')
 
 //models
 const studentModels = require('./models/students');
@@ -15,6 +16,7 @@ app.get('/', (req, res) => {
     res.send("Hello Abhishek");
 })
 
+app.use('/courses', courseRoutes);
 app.use('/students', studentRoutes);
 
 db.sync({forced: true}).then(()=>{
