@@ -1,5 +1,7 @@
 const db = require('../utils/db-connnection');
 const Student = require('../models/students');
+const IdentityCard = require('../models/identityCard');
+const Department = require('../models/department');
 
 const addEntries = async (req, res) => {
 
@@ -14,18 +16,50 @@ const addEntries = async (req, res) => {
         console.log(error);
         res.status(500).send(`Unable to make an entry!`);
     }
+}
 
-    // const insertQuery = 'INSERT INTO students (email, name) VALUES (?,?)';
-    // db.execute(insertQuery, [email, name], (err)=>{
-    //     if(err){
-    //         console.log(err.message);
-    //         res.status(500).send(err.message);
-    //         db.end();
-    //         return;
-    //     }
-    //     console.log("Values has been inserted ");
-    //     res.status(200).send(`Student with name ${name} has been added.`)
-    // })
+const addingValuesToStudentAndIdentityTable = async (req, res) =>{
+
+// CREATE : creates a new entry in the database inside the table called students
+// .student : data from the body is stored under a Key called 'student'
+// This will be the Payload(data sent from the frontend) for the request
+// "student" : {"name": "Abhishek"},
+// "identityCard" : {"cardNumber": "123456789"}
+// so from the above payload using '.student' the backend will retrieve the data in the 'student' key for student
+// and same with the identityCard as well
+
+    try {
+        const student = await Student.create(req.body.student);
+        const idCard = await IdentityCard.create({
+            ...req.body.IdentityCard,
+            studentId: student.id
+        });
+        res.status(201).json({student, idCard});
+    } catch (error) {
+        res.status(500).json({error:error.message});
+    }
+}
+
+const addingDepartmentForStudents = async (req, res) => {
+    try {
+        const { name } = req.body.department;
+
+        // Check if department already exists
+        let department = await Department.findOne({ where: { name } });
+
+        // If it doesn't exist, create a new one
+        if (!department) {
+            department = await Department.create({ name });
+        }
+
+        const student = await Student.create({
+            ...req.body.student,
+            departmentId: department.id 
+        })
+        res.status(201).json({department, student});
+    } catch (error) {
+        res.status(500).json({error:error.message});
+    }
 }
 
 const updateEntry =async (req, res) => {
@@ -43,21 +77,6 @@ const updateEntry =async (req, res) => {
         console.log(error);
         res.status(500).send("User cannot be updated!");
     }
-
-    // const udpateQuery = "UPDATE students set name = ? WHERE id = ?"
-    // db.execute(udpateQuery, [name, id], (err, result) =>{
-    //     if(err){
-    //         console.log(err.message);
-    //         res.status(500).send(err.message);
-    //         db.end();
-    //         return;
-    //     }
-    //     if(result.affectedRows === 0){
-    //         res.status(404).send("Student not found");
-    //         return;
-    //     }
-    //     res.status(200).send(`User has been updated.`)
-    // })
 }
 
 const deleteEntry = async (req, res) => {
@@ -77,25 +96,12 @@ const deleteEntry = async (req, res) => {
         console.log(error);
         res.status(500).send("Error occured while deleting.");
     }
-
-
-
-    // const deleteQuery = "DELETE FROM students where id = ?";
-    // db.execute(deleteQuery, [id], (err, result) => {
-    //     if (err) {
-    //         console.log(err.message);
-    //         res.status(500).send(err.message);
-    //     }
-    //     if (result.affectedRows === 0) {
-    //         res.status(404).send("Student not found");
-    //         return;
-    //     }
-    //     res.status(200).send(`User with ${id} has been deleted.`)
-    // })
 }
 
 module.exports = {
     addEntries,
     updateEntry,
-    deleteEntry
+    deleteEntry,
+    addingValuesToStudentAndIdentityTable,
+    addingDepartmentForStudents
 }
